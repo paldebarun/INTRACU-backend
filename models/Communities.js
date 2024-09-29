@@ -25,12 +25,12 @@ const Communities = new mongoose.Schema({
     },
     CategoryOfEntity: {
         type: String,
-        enum: ['a', 'b', 'c'],
+        enum: ['A', 'B', 'C','D'],
         required: true
     },
     ProposedBy: {
         type: String,
-        enum: ['student', 'faculty'],
+        enum:['Student','Faculty'],
         required: true
     },
     proponentName: {
@@ -41,11 +41,7 @@ const Communities = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Department"
     },
-    natureofEntity: {
-        type: String,
-        enum: ['Domain Specific(Skill Based)', 'Hackathon and Challenge', 'Invention and incubation', 'Social Value and Outreach'],
-        required: true
-    },
+ 
     proposedFacultyAdvisor: [
         {
             ProposedFacultyAdvisorName: String,

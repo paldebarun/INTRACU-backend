@@ -2,21 +2,21 @@ const DepartmentalSocieties = require('../models/DepartmentalSocieties');
 const Department = require('../models/Department');
 const Institute=require('../models/Institute');
 const Cluster=require('../models/Cluster');
+const { createStudentRep } = require('../controllers/studentRepresentative');
+const {createFaculty} = require('../controllers/facultyAdvisor');
 
 
 exports.createDepartmentalSociety = async (req, res) => {
   try {
     const {
       ProposedEntityName,
-      TypeOfEntity,
-      EntityDepartment,
+      entityType,
       EntityInstitute,
       EntityCluster,
-      CategoryOfEntity,
+      entityCategory,
       ProposedBy,
       proponentName,
       proponentDepartment,
-      natureofEntity,
       proposedFacultyAdvisor1,
       proposedFacultyAdvisor2,
       proposedFacultyCoAdvisor1,
@@ -27,14 +27,13 @@ exports.createDepartmentalSociety = async (req, res) => {
       proposedStudentJointRepresentative2,
       ProposedDate,
     } = req.body;
-
+    const EntityDepartment = proponentDepartment;
     if (
       !ProposedEntityName ||
-      !TypeOfEntity ||
-      !CategoryOfEntity ||
+      !entityType ||
+      !entityCategory ||
       !ProposedBy ||
       !proponentName ||
-      !natureofEntity ||
       !EntityDepartment ||
       !EntityInstitute ||
       !EntityCluster ||
@@ -56,22 +55,22 @@ exports.createDepartmentalSociety = async (req, res) => {
     }
 
     const requiredDepartment = await Department.findOne({ name: proponentDepartment });
-    const requiredEntityDepartment = await Department.findOne({ name: EntityDepartment });
-    const requiredEntityCluster = await Cluster.findOne({ name: EntityCluster });
+    const requiredClubDepartment = await Department.findOne({ name: EntityDepartment });
+    const requiredClubCluster = await Cluster.findOne({ name: EntityCluster });
     const requiredInstitute = await Institute.findOne({ name: EntityInstitute });
 
-    if (requiredDepartment && requiredDepartment && requiredEntityCluster && requiredInstitute) {
+    if (requiredDepartment && requiredClubDepartment && requiredClubCluster && requiredInstitute) {
       const newSociety = new DepartmentalSocieties({
         ProposedEntityName,
-        TypeOfEntity,
-        CategoryOfEntity,
+        TypeOfEntity:entityType,
+        CategoryOfEntity:entityCategory,
         ProposedBy,
         proponentName,
         proponentDepartment: requiredDepartment._id,
-        EntityDepartment:requiredEntityDepartment._id,
+        EntityDepartment:requiredClubDepartment._id,
         EntityInstitute:requiredInstitute._id,
-        EntityCluster:requiredEntityCluster._id,
-        natureofEntity,
+        EntityCluster:requiredClubCluster._id,
+        
         proposedFacultyAdvisor: [proposedFacultyAdvisor1, proposedFacultyAdvisor2],
         proposedFacultyCoAdvisor: [proposedFacultyCoAdvisor1, proposedFacultyCoAdvisor2],
         proposedStudentRepresentative: [proposedStudentRepresentative1, proposedStudentRepresentative2],
@@ -82,12 +81,41 @@ exports.createDepartmentalSociety = async (req, res) => {
         ProposedDate,
       });
 
-      const savedSociety = await newSociety.save();
+      const savedEntity = await newSociety.save();
+await createStudentRep(
+        {
+          body: {
+            proposedStudentRepresentative: [proposedStudentRepresentative1, proposedStudentRepresentative2],
+            proposedStudentJointRepresentative: [proposedStudentJointRepresentative1, proposedStudentJointRepresentative2],
+            proponentDepartment,
+          },
+        },
+        res,
+        requiredDepartment,
+        requiredClubCluster,
+        requiredInstitute,
+        savedEntity
+      );
+      await createFaculty(
+        {
+          body: {
+            proposedFacultyAdvisor: [proposedFacultyAdvisor1, proposedFacultyAdvisor2],
+            proposedFacultyCoAdvisor: [proposedFacultyCoAdvisor1, proposedFacultyCoAdvisor2],
+            proponentDepartment,
+          },
+        },
+        res,
+        requiredDepartment,
+        requiredClubCluster,
+        requiredInstitute,
+        savedEntity
+      );
+
 
       return res.status(201).json({
         success: true,
         message: 'Departmental Society created successfully',
-        Entity: savedSociety,
+        Entity: savedEntity,
       });
     } else {
       return res.status(404).json({

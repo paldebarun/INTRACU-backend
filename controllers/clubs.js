@@ -8,15 +8,14 @@ exports.createClub = async (req, res) => {
   try {
     const {
       ProposedEntityName,
-      TypeOfEntity,
-      CategoryOfEntity,
+      entityType,
+      entityCategory,
       ProposedBy,
-      EntityDepartment,
+      
       EntityInstitute,
       EntityCluster,
       proponentName,
       proponentDepartment,
-      natureofEntity,
       proposedFacultyAdvisor1,
       proposedFacultyAdvisor2,
       proposedFacultyCoAdvisor1,
@@ -27,19 +26,17 @@ exports.createClub = async (req, res) => {
       proposedStudentJointRepresentative2,
       ProposedDate,
     } = req.body;
-
+    const EntityDepartment = proponentDepartment;
     // Validating all required fields
     if (
       !ProposedEntityName ||
-      !TypeOfEntity ||
-      !CategoryOfEntity ||
+      !entityType ||
+      !entityCategory ||
       !ProposedBy ||
       !proponentName ||
       !proponentDepartment ||
-      !EntityDepartment ||
       !EntityInstitute ||
       !EntityCluster ||
-      !natureofEntity ||
       !proposedFacultyAdvisor1 ||
       !proposedFacultyAdvisor2 ||
       !proposedStudentRepresentative1 ||
@@ -55,7 +52,9 @@ exports.createClub = async (req, res) => {
         message: 'All fields are required',
       });
     }
-
+console.log(EntityDepartment);
+console.log(EntityInstitute);
+console.log(EntityCluster);
     const requiredDepartment = await Department.findOne({ name: proponentDepartment });
     const requiredClubDepartment = await Department.findOne({ name: EntityDepartment });
     const requiredClubCluster = await Cluster.findOne({ name: EntityCluster });
@@ -65,12 +64,11 @@ exports.createClub = async (req, res) => {
       // Create new club entity
       const newClub = new Club({
         ProposedEntityName,
-        TypeOfEntity,
-        CategoryOfEntity,
+        TypeOfEntity:entityType,
+        CategoryOfEntity:entityCategory,
         ProposedBy,
         proponentName,
         proponentDepartment: requiredDepartment._id,
-        natureofEntity,
         EntityDepartment: requiredClubDepartment._id,
         EntityInstitute: requiredInstitute._id,
         EntityCluster: requiredClubCluster._id,

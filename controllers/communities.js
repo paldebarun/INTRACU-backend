@@ -3,20 +3,20 @@ const Department = require('../models/Department');
 const Institute = require('../models/Institute');
 const Cluster = require('../models/Cluster');
 const mongoose = require('mongoose');
+const { createStudentRep } = require('../controllers/studentRepresentative');
+const {createFaculty} = require('../controllers/facultyAdvisor');
 
 exports.createCommunity = async (req, res) => {
   try {
     const {
       ProposedEntityName,
-      TypeOfEntity,
-      CategoryOfEntity,
+      entityType,
+      entityCategory,
       ProposedBy,
       proponentName,
       proponentDepartment,
-      EntityDepartment,
       EntityInstitute,
       EntityCluster,
-      natureofEntity,
       proposedFacultyAdvisor1,
       proposedFacultyAdvisor2,
       proposedFacultyCoAdvisor1,
@@ -27,19 +27,18 @@ exports.createCommunity = async (req, res) => {
       proposedStudentJointRepresentative2,
       ProposedDate,
     } = req.body;
-
+    const EntityDepartment = proponentDepartment;
     // Check for required fields
     if (
       !ProposedEntityName ||
-      !TypeOfEntity ||
-      !CategoryOfEntity ||
+      !entityType ||
+      !entityCategory ||
       !ProposedBy ||
       !proponentName ||
       !proponentDepartment ||
       !EntityDepartment ||
       !EntityInstitute ||
       !EntityCluster ||
-      !natureofEntity ||
       !proposedFacultyAdvisor1 ||
       !proposedFacultyAdvisor2 ||
       !proposedStudentRepresentative1 ||
@@ -58,23 +57,22 @@ exports.createCommunity = async (req, res) => {
 
     // Fetch related entities from their respective models
     const requiredDepartment = await Department.findOne({ name: proponentDepartment });
-    const requiredCommunityDepartment = await Department.findOne({ name: EntityDepartment });
-    const requiredCommunityCluster = await Cluster.findOne({ name: EntityCluster });
+    const requiredClubDepartment = await Department.findOne({ name: EntityDepartment });
+    const requiredClubCluster = await Cluster.findOne({ name: EntityCluster });
     const requiredInstitute = await Institute.findOne({ name: EntityInstitute });
 
     // Check if related entities exist
-    if (requiredDepartment && requiredCommunityDepartment && requiredCommunityCluster && requiredInstitute) {
+    if (requiredDepartment && requiredClubDepartment && requiredClubCluster && requiredInstitute) {
       const newCommunity = new Communities({
         ProposedEntityName,
-        TypeOfEntity,
-        CategoryOfEntity,
+        TypeOfEntity:entityType,
+        CategoryOfEntity:entityCategory,
         ProposedBy,
         proponentName,
         proponentDepartment: requiredDepartment._id,
-        EntityDepartment: requiredCommunityDepartment._id,
+        EntityDepartment: requiredClubDepartment._id,
         EntityInstitute: requiredInstitute._id,
-        EntityCluster: requiredCommunityCluster._id,
-        natureofEntity,
+        EntityCluster: requiredClubCluster._id,
         proposedFacultyAdvisor: [proposedFacultyAdvisor1, proposedFacultyAdvisor2],
         proposedFacultyCoAdvisor: [proposedFacultyCoAdvisor1, proposedFacultyCoAdvisor2],
         proposedStudentRepresentative: [proposedStudentRepresentative1, proposedStudentRepresentative2],
@@ -85,12 +83,41 @@ exports.createCommunity = async (req, res) => {
         ProposedDate,
       });
 
-      const savedCommunity = await newCommunity.save();
+      const savedEntity = await newCommunity.save();
+      await createStudentRep(
+        {
+          body: {
+            proposedStudentRepresentative: [proposedStudentRepresentative1, proposedStudentRepresentative2],
+            proposedStudentJointRepresentative: [proposedStudentJointRepresentative1, proposedStudentJointRepresentative2],
+            proponentDepartment,
+          },
+        },
+        res,
+        requiredDepartment,
+        requiredClubCluster,
+        requiredInstitute,
+        savedEntity
+      );
+      await createFaculty(
+        {
+          body: {
+            proposedFacultyAdvisor: [proposedFacultyAdvisor1, proposedFacultyAdvisor2],
+            proposedFacultyCoAdvisor: [proposedFacultyCoAdvisor1, proposedFacultyCoAdvisor2],
+            proponentDepartment,
+          },
+        },
+        res,
+        requiredDepartment,
+        requiredClubCluster,
+        requiredInstitute,
+        savedEntity
+      );
+
 
       return res.status(201).json({
         success: true,
         message: 'Community created successfully',
-        Entity: savedCommunity,
+        Entity: savedEntity,
       });
     } else {
       return res.status(404).json({
