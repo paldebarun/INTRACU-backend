@@ -119,6 +119,9 @@ app.use('/api/central', centralRoute);
 const eventRoute = require('./routes/eventRoute');
 app.use('/api/event', eventRoute);
 
+const memberRoute = require('./routes/members');
+app.use('/api/member',memberRoute);
+
 app.get('/api/me', verifyToken, async (req, res) => {
    try {
       const { id, role } = req.user;
@@ -141,6 +144,7 @@ app.get('/api/me', verifyToken, async (req, res) => {
         user: {
           name: user.name || user.eid || user.uid,
           role,
+          entity: user.club
         },
       });
     } catch (error) {

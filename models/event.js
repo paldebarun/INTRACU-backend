@@ -49,6 +49,10 @@ const eventSchema = new Schema({
   featured: {
     type: Boolean,
     default: false
+  },
+  budget:{
+    type: Number,
+    required:true
   }
 });
 
