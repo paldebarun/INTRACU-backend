@@ -10,103 +10,93 @@ const { imageUpload } = require("./UploadToCloudinary");
 const mongoose = require("mongoose");
 exports.createEvent = async (req, res) => {
     try {
-        const { name, entityType, entityName, organizerType, organizerName, date, venue, Eventtype, category ,budget} = req.body;
+        const { 
+            eventName, 
+            entity, 
+            organizerCategory, 
+            organizerName, 
+            startDate, 
+            endDate, 
+            venue, 
+            eventType, 
+            eventCategory, 
+            organizationLevel, 
+            budget 
+        } = req.body;
+
+        // Image upload logic (if you have implemented the imageUpload function)
         const imageUploadResult = await imageUpload(req);
         if (!imageUploadResult.success) {
             return res.status(400).json(imageUploadResult);
         }
         const imageUrl = imageUploadResult.imageUrl;
-        let entity;
-        if (entityType === "club") {
-            entity = await Club.findOne({ ProposedClubName: entityName });
-            if (!entity) {
-                return res.status(500).json({
-                    success: false,
-                    message: `Club not found`,
-                });
-            }
-        } else if (entityType === "community") {
-            entity = await Communities.findOne({ ProposedCommunityName: entityName });
-            if (!entity) {
-                return res.status(500).json({
-                    success: false,
-                    message: `Community not found`,
-                });
-            }
-        } else if (entityType === "department-society") {
-            entity = await DepartmentalSocieties.findOne({ ProposedSocietyName: entityName });
-            if (!entity) {
-                return res.status(500).json({
-                    success: false,
-                    message: `Department-society not found`,
-                });
-            }
-        } else if (entityType === "professional-society") {
-            entity = await ProfessionalSocieties.findOne({ ProposedSocietyName: entityName });
-            if (!entity) {
-                return res.status(500).json({
-                    success: false,
-                    message: `Professional-society not found`,
-                });
-            }
+
+        // Entity validation
+        let entityType;
+        if (Club.findById(entity)) {
+            entityType = "club";
+        } else if (Communities.findById(entity)) {
+            entityType = "community";//department-society
+        } else if (await DepartmentalSocieties.findById(entity)) {
+            entityType="department-society";//professional-society
+        } else if (await ProfessionalSocieties.findById(entity)) {
+            entityType = "professional-society";
+        }
+        if (!entityType) {
+            console.log("entity not found");
+            return res.status(500).json({
+                success: false,
+                message: `Entity not found`,
+            });
         }
 
+        // Organizer validation
         let organizer;
-        if (organizerType === "Cluster") {
+        if (organizerCategory === "Cluster") {
             organizer = await Cluster.findOne({ name: organizerName });
-            if (!organizer) {
-                return res.status(500).json({
-                    success: false,
-                    message: `Organizer not found`,
-                });
-            }
-        } else if (organizerType === "Department") {
+        } else if (organizerCategory === "Department") {
             organizer = await Department.findOne({ name: organizerName });
-            if (!organizer) {
-                return res.status(500).json({
-                    success: false,
-                    message: `Organizer not found`,
-                });
-            }
         } else {
             organizer = await Institute.findOne({ name: organizerName });
-            if (!organizer) {
-                return res.status(500).json({
-                    success: false,
-                    message: `Organizer not found`,
-                });
-            }
+        }
+        if (!organizer) {
+            console.log("organizer not found");
+            return res.status(500).json({
+
+                success: false,
+                message: `Organizer not found`,
+            });
         }
 
+        // Create event
         const newEvent = new Event({
-            name,
+            name:eventName,
             imageUrl,
-            date,
+            date: {
+                startDate: new Date(startDate),
+                endDate: new Date(endDate)
+            },
             entity: {
                 type: entityType,
-                id: entity._id
+                id: entity  
             },
             organizer: {
-                type: organizerType,
+                type: organizerCategory,
                 id: organizer._id
             },
             venue,
-            Eventtype,
-            category,
+            Eventtype:eventType,
+            category:eventCategory,
+            organizationLevel,
             budget
         });
 
-        const savedEvent = await newEvent.save();
-        return res.status(201).json({
-            success: true,
-            message: 'Event created successfully',
-            event: savedEvent
-        });
-    } catch (err) {
-        return res.status(500).json({
-            success: false,
-            message: `Error creating event: ${err.message}`,
-        });
+        await newEvent.save();
+        return res.status(201).json({ success: true, event: newEvent });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: "Server error" });
     }
 };
 
@@ -207,6 +197,8 @@ exports.getTotalBudgetByEntity = async (req, res) => {
       }
   
       const { startOfMonth, endOfMonth } = getCurrentMonthRange();
+      console.log(startOfMonth);
+      console.log(endOfMonth);
       console.log(entityRef);
       const totalBudget = await Event.aggregate([
         {

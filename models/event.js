@@ -4,12 +4,12 @@ const { Schema } = mongoose;
 const eventSchema = new Schema({
   name: {
     type: String,
-    required: true 
+    required: true
   },
   imageUrl: {
     type: String,
-    required: true 
-  }, 
+    required: true
+  },
   entity: {
     type: {
       type: String,
@@ -19,8 +19,14 @@ const eventSchema = new Schema({
     id: { type: Schema.Types.ObjectId, required: true }
   },
   date: {
-    type: Date,
-    required: true 
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
+      required: true,
+    }
   },
   organizer: {
     type: {
@@ -32,15 +38,26 @@ const eventSchema = new Schema({
   },
   venue: {
     type: String,
-    required: true 
+    required: true
   },
   Eventtype: {
     type: String,
-    required: true 
+    enum: ["flagship", "weekly", "monthly"],
+    required: true
   },
   category: {
     type: String,
-    required: true 
+    enum: ["Hackathon", "Workshop", "Seminar"],
+    required: true
+  },
+  organizationLevel: {
+    type: String,
+    enum: ['Open for all', 'Members only'],
+    required: true
+  },
+  budget: {
+    type: Number,
+    required: true
   },
   approval: {
     type: Boolean,
@@ -49,10 +66,6 @@ const eventSchema = new Schema({
   featured: {
     type: Boolean,
     default: false
-  },
-  budget:{
-    type: Number,
-    required:true
   }
 });
 
