@@ -43,3 +43,23 @@ exports.approve = async (req,res)=>{
         });
       }
 }
+
+
+exports.getAllMembers = async (req, res) => {
+  try {
+    const response = await Member.find(); // No filter to get all members
+
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: 'All members retrieved successfully',
+      response,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};

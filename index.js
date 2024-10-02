@@ -119,6 +119,9 @@ app.use('/api/central', centralRoute);
 const eventRoute = require('./routes/eventRoute');
 app.use('/api/event', eventRoute);
 
+const allBodeisRoutes=require('./routes/fetchallbodies');
+app.use('/api/allbodies',allBodeisRoutes);
+
 const memberRoute = require('./routes/members');
 app.use('/api/member',memberRoute);
 
