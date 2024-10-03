@@ -17,6 +17,10 @@ const memberSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  gender:{
+    type: String,
+    required:true
+  },
   entityType: {
     type: String,
     required: true,

@@ -254,9 +254,9 @@ async function validateOtp(email, otp) {
 }
 
 app.post('/api/submit-form', async (req, res) => {
-  const { name, email, uid, otp, entityType, entityId } = req.body;
+  const { name, email, uid, otp,gender, entityType, entityId } = req.body;
 
-  if (!name || !email || !uid || !otp || !entityType || !entityId) {
+  if (!name || !email || !uid || !otp || !entityType || !gender || !entityId) {
     return res.status(400).json({ message: 'All fields are required.' });
   }
 
@@ -293,6 +293,7 @@ app.post('/api/submit-form', async (req, res) => {
       email,
       uid, 
       entityType,
+      gender,
       entityRef: entity._id,
       otp,
       otpExpiry: Date.now(), 
@@ -306,6 +307,8 @@ app.post('/api/submit-form', async (req, res) => {
     return res.status(500).json({ message: 'Server error.' });
   }
 });
+
+
 
 app.listen(PORT, () => {
    console.log(`The server is listening at port no: ${PORT}`);
