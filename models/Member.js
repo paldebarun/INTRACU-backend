@@ -17,9 +17,9 @@ const memberSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  gender:{
+  gender: {
     type: String,
-    required:true
+    required: true,
   },
   entityType: {
     type: String,
@@ -28,7 +28,7 @@ const memberSchema = new mongoose.Schema({
   },
   entityRef: {
     type: mongoose.Schema.Types.ObjectId,
-    refPath: 'entityType', 
+    refPath: 'entityType',
     required: true,
   },
   otp: {
@@ -38,6 +38,14 @@ const memberSchema = new mongoose.Schema({
   otpExpiry: {
     type: Date,
     required: true,
+  },
+  department:{
+    type: String,
+    required:true
+  },
+  ticketNumber: {
+    type: Number,
+    unique: true, 
   },
 });
 

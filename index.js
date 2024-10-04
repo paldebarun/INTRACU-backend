@@ -3,6 +3,9 @@ const app = express();
 const cors = require('cors');
 const nodemailer = require('nodemailer');
 const Member = require('./models/Member');
+const Ticket = require('./models/Ticket');
+const {appliedSuccessfully} = require('./controllers/mail');
+
 app.use(express.json());
 require('dotenv').config();
 
@@ -119,41 +122,38 @@ app.use('/api/central', centralRoute);
 const eventRoute = require('./routes/eventRoute');
 app.use('/api/event', eventRoute);
 
-const allBodeisRoutes=require('./routes/fetchallbodies');
-app.use('/api/allbodies',allBodeisRoutes);
-
 const memberRoute = require('./routes/members');
 app.use('/api/member',memberRoute);
 
-app.get('/api/me', verifyToken, async (req, res) => {
-   try {
-      const { id, role } = req.user;
-  
-      let user;
-      if (role === 'Student Rep') {
-        user = await StudentRep.findById(id);
-      } else if (role === 'Faculty') {
-        user = await Faculty.findById(id);
-      } else if (role === 'Central Office') {
-        user = await CentralOffice.findById(id);
+  app.get('/api/me', verifyToken, async (req, res) => {
+    try {
+        const { id, role } = req.user;
+    
+        let user;
+        if (role === 'Student Rep') {
+          user = await StudentRep.findById(id);
+        } else if (role === 'Faculty') {
+          user = await Faculty.findById(id);
+        } else if (role === 'Central Office') {
+          user = await CentralOffice.findById(id);
+        }
+    
+        if (!user) {
+          return res.status(404).json({ success: false, message: 'User not found' });
+        }
+    
+        return res.status(200).json({
+          success: true,
+          user: {
+            name: user.name || user.eid || user.uid,
+            role,
+            entity: user.club
+          },
+        });
+      } catch (error) {
+        return res.status(500).json({ success: false, message: `Server error: ${error.message}` });
       }
-  
-      if (!user) {
-        return res.status(404).json({ success: false, message: 'User not found' });
-      }
-  
-      return res.status(200).json({
-        success: true,
-        user: {
-          name: user.name || user.eid || user.uid,
-          role,
-          entity: user.club
-        },
-      });
-    } catch (error) {
-      return res.status(500).json({ success: false, message: `Server error: ${error.message}` });
-    }
-});
+  });
 
 app.get('/api/entity-counts', async (req, res) => {
   try {
@@ -253,8 +253,9 @@ async function validateOtp(email, otp) {
   }
 }
 
+
 app.post('/api/submit-form', async (req, res) => {
-  const { name, email, uid, otp,gender, entityType, entityId } = req.body;
+  const { name, email, uid, otp, gender, entityType, entityId ,department} = req.body;
 
   if (!name || !email || !uid || !otp || !entityType || !gender || !entityId) {
     return res.status(400).json({ message: 'All fields are required.' });
@@ -288,27 +289,34 @@ app.post('/api/submit-form', async (req, res) => {
       return res.status(404).json({ message: 'Entity not found.' });
     }
 
+    const counter = await Ticket.findOneAndUpdate(
+      { entityType: entityType },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true } 
+    );
+
     const newMember = new Member({
       name,
       email,
-      uid, 
+      uid,
       entityType,
       gender,
       entityRef: entity._id,
       otp,
-      otpExpiry: Date.now(), 
+      otpExpiry: Date.now(),
+      ticketNumber: counter.seq, 
+      department
     });
 
     await newMember.save();
-
+    const sendMail = await appliedSuccessfully(email,entityId,counter.seq);
+    
     return res.status(201).json({ message: 'Member successfully registered and pending approval.' });
   } catch (error) {
     console.error('Error creating member:', error);
     return res.status(500).json({ message: 'Server error.' });
   }
 });
-
-
 
 app.listen(PORT, () => {
    console.log(`The server is listening at port no: ${PORT}`);

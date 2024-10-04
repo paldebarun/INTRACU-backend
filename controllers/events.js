@@ -8,6 +8,7 @@ const ProfessionalSocieties = require('../models/ProfessionalSocieties');
 const Communities = require('../models/Communities');
 const { imageUpload } = require("./UploadToCloudinary");
 const mongoose = require("mongoose");
+
 exports.createEvent = async (req, res) => {
     try {
         const { 
@@ -137,7 +138,7 @@ exports.getUnapprovedByID = async (req, res) => {
         console.log("Entity Ref:", entityRef);
 
         const allEvents = await Event.find({
-                  // Match unapproved events
+                 
             'entity.id': entityRef,
             approval: false      // Match the specific entity ID
         });
