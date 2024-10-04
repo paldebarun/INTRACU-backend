@@ -11,7 +11,7 @@ exports.listMembersOfEntity = async (req, res) => {
   try {
     const { entityRef } = req.query;
 
-    const response = await Member.find({ entityRef: entityRef ,approval:false});
+    const response = await Member.find({ entityRef: entityRef});
 
     return res.status(200).json({
       success: true,
