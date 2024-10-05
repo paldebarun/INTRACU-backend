@@ -6,7 +6,7 @@ const {createEvent,getFlagship,getMonthly,getWeekly,getAllEvents,getAllEventsByI
 
 
 router.post('/events', createEvent);
-router.get('/getallEvents',getAllEvents)
+router.get('/getallEvents',getAllEvents);
 router.get('/flagship',getFlagship);
 router.get('/monthly',getMonthly);
 router.get('/weekly',getWeekly);

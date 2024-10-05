@@ -81,8 +81,10 @@ exports.appliedSuccessfully = async (email,club,ticket)=>{
 
 exports.inviteMembersByEntity = async (req, res) => {
     try {
-        const { entityRef,eventRef } = req.query;
+        const { entityRef,eventRef } = req.body;
+        console.log("entity and event id : ",entityRef,eventRef);
         const event = await Event.findById(eventRef);
+        console.log("this is event :",event);
         const eventName = event.name; 
         const date= event.date.startDate;
         const venue = event.venue;

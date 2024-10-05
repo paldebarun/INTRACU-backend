@@ -119,6 +119,7 @@ exports.getAllEvents = async (req, res) => {
 exports.getAllEventsById = async (req, res) => {
     try {
         const {entityRef} = req.query;
+        console.log(entityRef)
         const allEvents = await Event.find({'entity.id': entityRef });  // Fetch all events from the database
         
         return res.status(200).json({
@@ -140,7 +141,7 @@ exports.getUnapprovedByID = async (req, res) => {
         const allEvents = await Event.find({
                  
             'entity.id': entityRef,
-            approval: false      // Match the specific entity ID
+            approval: false     
         });
 
         return res.status(200).json({
