@@ -146,7 +146,7 @@ exports.getAllEvents = async (req, res) => {
     } catch (err) {
         return res.status(500).json({
             success: false,
-            message: Error retrieving events: ${err.message},
+            message: `Error retrieving events: ${err.message}`,
         });
     }
 };
