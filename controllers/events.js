@@ -214,6 +214,46 @@ exports.getFeaturedEvents = async (req, res) => {
         });
     }
 };
+exports.getMonthWiseEvents = async (req, res) => {
+    try {
+        const currentYear = new Date().getFullYear();
+        const monthlyEvents = await Event.aggregate([
+            {
+                $match: {
+                    'date.startDate': {
+                        $gte: new Date(currentYear, 0, 1),
+                        $lt: new Date(currentYear + 1, 0, 1)
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $month: '$date.startDate' },
+                    events: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    month: {
+                        $arrayElemAt: [
+                            ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+                            { $subtract: ['$_id', 1] }
+                        ]
+                    },
+                    events: 1
+                }
+            },
+            { $sort: { '_id': 1 } }
+        ]);
+
+        res.json(monthlyEvents);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
 exports.getAllEventsById = async (req, res) => {
     try {
         const {entityRef} = req.query;
