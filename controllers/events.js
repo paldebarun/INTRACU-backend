@@ -216,15 +216,24 @@ exports.getFeaturedEvents = async (req, res) => {
 };
 exports.getMonthWiseEvents = async (req, res) => {
     try {
+        const { entityId } = req.query;
         const currentYear = new Date().getFullYear();
+
+        let matchStage = {
+            'date.startDate': {
+                $gte: new Date(currentYear, 0, 1),
+                $lt: new Date(currentYear + 1, 0, 1)
+            }
+        };
+
+        // Add entity filter if entityId is provided
+        if (entityId) {
+            matchStage['entity.id'] = entityId;
+        }
+
         const monthlyEvents = await Event.aggregate([
             {
-                $match: {
-                    'date.startDate': {
-                        $gte: new Date(currentYear, 0, 1),
-                        $lt: new Date(currentYear + 1, 0, 1)
-                    }
-                }
+                $match: matchStage
             },
             {
                 $group: {
@@ -235,19 +244,27 @@ exports.getMonthWiseEvents = async (req, res) => {
             {
                 $project: {
                     _id: 0,
-                    month: {
-                        $arrayElemAt: [
-                            ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-                            { $subtract: ['$_id', 1] }
-                        ]
-                    },
+                    month: '$_id',
                     events: 1
                 }
             },
-            { $sort: { '_id': 1 } }
+            { $sort: { 'month': 1 } }
         ]);
 
-        res.json(monthlyEvents);
+        // Create an array with all months
+        const allMonths = Array.from({ length: 12 }, (_, i) => ({
+            month: i + 1,
+            monthName: new Date(0, i).toLocaleString('default', { month: 'long' }),
+            events: 0
+        }));
+
+        // Merge the results
+        const mergedResults = allMonths.map(month => {
+            const foundMonth = monthlyEvents.find(event => event.month === month.month);
+            return foundMonth ? { ...month, events: foundMonth.events } : month;
+        });
+
+        res.json(mergedResults);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
