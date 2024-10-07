@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 
-const {createEvent,getAllApprovedEvents, getFlagship,getMonthly,getWeekly,getAllEvents,getAllEventsById,getFeaturedEvents,getUnapprovedEvents,eventsCountEntity,approve,getUnapprovedByID,getTotalBudgetByEntity} = require('../controllers/events');
+const {createEvent,getAllApprovedEvents, getFlagship,getMonthly,getWeekly,getAllEvents,getAllEventsById,getFeaturedEvents,getUnapprovedEvents,eventsCountEntity,approve,getUnapprovedByID,getTotalBudgetByEntity,getMonthWiseEvents} = require('../controllers/events');
 
 
 router.post('/events', createEvent);
@@ -13,6 +13,7 @@ router.get('/monthly',getMonthly);
 router.get('/weekly',getWeekly);
 router.get('/featured',getFeaturedEvents);
 router.get('/unapprovedEvents',getUnapprovedEvents);
+router.get('/getMonthWiseEvents',getMonthWiseEvents);
 router.get('/getAllEventsById',getAllEventsById);
 router.get('/events-count-entity',eventsCountEntity);
 router.get('/getUnapprovedByID',getUnapprovedByID);
