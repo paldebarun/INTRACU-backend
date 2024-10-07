@@ -228,7 +228,7 @@ exports.getMonthWiseEvents = async (req, res) => {
 
         // Add entity filter if entityId is provided
         if (entityId) {
-            matchStage['entity.id'] = entityId;
+            matchStage['entity.id'] = new mongoose.Types.ObjectId(entityId);
         }
 
         const monthlyEvents = await Event.aggregate([
@@ -264,12 +264,14 @@ exports.getMonthWiseEvents = async (req, res) => {
             return foundMonth ? { ...month, events: foundMonth.events } : month;
         });
 
+        console.log('Merged Results:', mergedResults); // Add this line for debugging
+
         res.json(mergedResults);
     } catch (error) {
+        console.error('Error in getMonthWiseEvents:', error); // Add this line for debugging
         res.status(500).json({ message: error.message });
     }
 };
-
 
 exports.getAllEventsById = async (req, res) => {
     try {
