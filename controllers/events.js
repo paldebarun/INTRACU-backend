@@ -106,7 +106,105 @@ exports.createEvent = async (req, res) => {
 
 exports.getAllEvents = async (req, res) => {
     try {
-        const allEvents = await Event.find();  // Fetch all events from the database
+        const currentDate = new Date();
+
+        const allEvents = await Event.find({
+            'date.startDate': { $gte: currentDate }
+        });
+        const eventsWithEntityNames = await Promise.all(
+            allEvents.map(async event => {
+                let entityName = '';
+
+                switch (event.entity.type) {
+                    case 'club':
+                        const club = await Club.findById(event.entity.id).select('ProposedEntityName');
+                        entityName = club ? club.ProposedEntityName : 'Unknown Club';
+                        break;
+                    case 'community':
+                        const community = await Communities.findById(event.entity.id).select('ProposedEntityName');
+                        entityName = community ? community.ProposedEntityName : 'Unknown Community';
+                        break;
+                    case 'department-society':
+                        const department = await DepartmentalSocieties.findById(event.entity.id).select('ProposedEntityName');
+                        entityName = department ? department.ProposedEntityName : 'Unknown Departmental Society';
+                        break;
+                    case 'professional-society':
+                        const professional = await ProfessionalSocieties.findById(event.entity.id).select('ProposedEntityName');
+                        entityName = professional ? professional.ProposedEntityName : 'Unknown Professional Society';
+                        break;
+                    default:
+                        entityName = 'Unknown Entity';
+                }
+                return {
+                    ...event.toObject(),
+                    entityName: entityName,
+                };
+            })
+        );
+
+        return res.status(200).json({
+            success: true,
+            events: eventsWithEntityNames
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: `Error retrieving events: ${err.message}`,
+        });
+    }
+};
+exports.getAllApprovedEvents = async (req, res) => {
+    try {
+        const currentDate = new Date();
+
+        const allEvents = await Event.find({
+            'date.startDate': { $gte: currentDate }
+        , approval: true});
+        const eventsWithEntityNames = await Promise.all(
+            allEvents.map(async event => {
+                let entityName = '';
+
+                switch (event.entity.type) {
+                    case 'club':
+                        const club = await Club.findById(event.entity.id).select('ProposedEntityName');
+                        entityName = club ? club.ProposedEntityName : 'Unknown Club';
+                        break;
+                    case 'community':
+                        const community = await Communities.findById(event.entity.id).select('ProposedEntityName');
+                        entityName = community ? community.ProposedEntityName : 'Unknown Community';
+                        break;
+                    case 'department-society':
+                        const department = await DepartmentalSocieties.findById(event.entity.id).select('ProposedEntityName');
+                        entityName = department ? department.ProposedEntityName : 'Unknown Departmental Society';
+                        break;
+                    case 'professional-society':
+                        const professional = await ProfessionalSocieties.findById(event.entity.id).select('ProposedEntityName');
+                        entityName = professional ? professional.ProposedEntityName : 'Unknown Professional Society';
+                        break;
+                    default:
+                        entityName = 'Unknown Entity';
+                }
+                return {
+                    ...event.toObject(),
+                    entityName: entityName,
+                };
+            })
+        );
+
+        return res.status(200).json({
+            success: true,
+            events: eventsWithEntityNames
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: `Error retrieving events: ${err.message}`,
+        });
+    }
+};
+exports.getFeaturedEvents = async (req, res) => {
+    try {
+        const allEvents = await Event.find({featured:true});  // Fetch all events from the database
 
         return res.status(200).json({
             success: true,
@@ -119,6 +217,65 @@ exports.getAllEvents = async (req, res) => {
         });
     }
 };
+exports.getMonthWiseEvents = async (req, res) => {
+    try {
+        const { entityId } = req.query;
+        const currentYear = new Date().getFullYear();
+
+        let matchStage = {
+            'date.startDate': {
+                $gte: new Date(currentYear, 0, 1),
+                $lt: new Date(currentYear + 1, 0, 1)
+            }
+        };
+
+        // Add entity filter if entityId is provided
+        if (entityId) {
+            matchStage['entity.id'] = new mongoose.Types.ObjectId(entityId);
+        }
+
+        const monthlyEvents = await Event.aggregate([
+            {
+                $match: matchStage
+            },
+            {
+                $group: {
+                    _id: { $month: '$date.startDate' },
+                    events: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    month: '$_id',
+                    events: 1
+                }
+            },
+            { $sort: { 'month': 1 } }
+        ]);
+
+        // Create an array with all months
+        const allMonths = Array.from({ length: 12 }, (_, i) => ({
+            month: i + 1,
+            monthName: new Date(0, i).toLocaleString('default', { month: 'long' }),
+            events: 0
+        }));
+
+        // Merge the results
+        const mergedResults = allMonths.map(month => {
+            const foundMonth = monthlyEvents.find(event => event.month === month.month);
+            return foundMonth ? { ...month, events: foundMonth.events } : month;
+        });
+
+        console.log('Merged Results:', mergedResults); // Add this line for debugging
+
+        res.json(mergedResults);
+    } catch (error) {
+        console.error('Error in getMonthWiseEvents:', error); // Add this line for debugging
+        res.status(500).json({ message: error.message });
+    }
+};
+
 exports.getAllEventsById = async (req, res) => {
     try {
         const {entityRef} = req.query;
