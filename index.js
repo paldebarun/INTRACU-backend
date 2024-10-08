@@ -9,7 +9,13 @@ const {appliedSuccessfully} = require('./controllers/mail');
 app.use(express.json());
 require('dotenv').config();
 
-app.use(cors());
+const corsOptions = {
+  origin: 'http://13.60.25.242:3000/', 
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true, // If your requests include credentials (like cookies or HTTP auth)
+};
+
+app.use(cors(corsOptions));
 
 const generateOtp = () => {
   return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP

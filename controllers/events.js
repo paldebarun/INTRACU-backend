@@ -9,6 +9,8 @@ const Communities = require('../models/Communities');
 const { imageUpload } = require("./UploadToCloudinary");
 const mongoose = require("mongoose");
 
+
+
 exports.createEvent = async (req, res) => {
     try {
         const { 
@@ -96,10 +98,11 @@ exports.createEvent = async (req, res) => {
         return res.status(201).json({ success: true, event: newEvent });
 
     } catch (error) {
-        console.error(error);
+        console.log("this is error",error);
         return res.status(500).json({ success: false, message: "Server error" });
     }
 };
+
 
 exports.getAllEvents = async (req, res) => {
     try {
@@ -133,6 +136,8 @@ exports.getAllEventsById = async (req, res) => {
         });
     }
 };
+
+
 exports.getUnapprovedByID = async (req, res) => {
     try {
         const { entityRef } = req.query;
@@ -142,6 +147,29 @@ exports.getUnapprovedByID = async (req, res) => {
                  
             'entity.id': entityRef,
             approval: false     
+        });
+
+        return res.status(200).json({
+            success: true,
+            events: allEvents
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: `Error retrieving events: ${err.message}`,
+        });
+    }
+};
+
+exports.getapprovedByID = async (req, res) => {
+    try {
+        const { entityRef } = req.query;
+        console.log("Entity Ref:", entityRef);
+
+        const allEvents = await Event.find({
+                 
+            'entity.id': entityRef,
+            approval: true  
         });
 
         return res.status(200).json({
