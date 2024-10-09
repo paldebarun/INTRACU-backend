@@ -10,7 +10,7 @@ app.use(express.json());
 require('dotenv').config();
 
 const corsOptions = {
-  origin: 'http://13.60.25.242:3000/', 
+  origin:true, 
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true, // If your requests include credentials (like cookies or HTTP auth)
 };
