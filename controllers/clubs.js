@@ -11,23 +11,19 @@ exports.createClub = async (req, res) => {
       entityType,
       entityCategory,
       ProposedBy,
-      
       EntityInstitute,
       EntityCluster,
       proponentName,
       proponentDepartment,
-      proposedFacultyAdvisor1,
-      proposedFacultyAdvisor2,
-      proposedFacultyCoAdvisor1,
-      proposedFacultyCoAdvisor2,
-      proposedStudentRepresentative1,
-      proposedStudentRepresentative2,
-      proposedStudentJointRepresentative1,
-      proposedStudentJointRepresentative2,
+      proposedFacultyAdvisors, 
+      proposedFacultyCoAdvisors, 
+      proposedStudentRepresentatives,
+      proposedStudentJointRepresentatives, 
       ProposedDate,
     } = req.body;
+
     const EntityDepartment = proponentDepartment;
-    // Validating all required fields
+
     if (
       !ProposedEntityName ||
       !entityType ||
@@ -37,24 +33,18 @@ exports.createClub = async (req, res) => {
       !proponentDepartment ||
       !EntityInstitute ||
       !EntityCluster ||
-      !proposedFacultyAdvisor1 ||
-      !proposedFacultyAdvisor2 ||
-      !proposedStudentRepresentative1 ||
-      !proposedStudentRepresentative2 ||
-      !proposedStudentJointRepresentative1 ||
-      !proposedStudentJointRepresentative2 ||
-      !proposedFacultyCoAdvisor1 ||
-      !proposedFacultyCoAdvisor2 ||
-      !ProposedDate
+      !ProposedDate ||
+      !Array.isArray(proposedFacultyAdvisors) || proposedFacultyAdvisors.length === 0 ||
+      !Array.isArray(proposedFacultyCoAdvisors) || proposedFacultyCoAdvisors.length === 0 ||
+      !Array.isArray(proposedStudentRepresentatives) || proposedStudentRepresentatives.length === 0 ||
+      !Array.isArray(proposedStudentJointRepresentatives) || proposedStudentJointRepresentatives.length === 0
     ) {
       return res.status(400).json({
         success: false,
-        message: 'All fields are required',
+        message: 'All fields are required, including non-empty arrays for faculty and student representatives',
       });
     }
-console.log(EntityDepartment);
-console.log(EntityInstitute);
-console.log(EntityCluster);
+
     const requiredDepartment = await Department.findOne({ name: proponentDepartment });
     const requiredClubDepartment = await Department.findOne({ name: EntityDepartment });
     const requiredClubCluster = await Cluster.findOne({ name: EntityCluster });
@@ -64,18 +54,18 @@ console.log(EntityCluster);
       // Create new club entity
       const newClub = new Club({
         ProposedEntityName,
-        TypeOfEntity:entityType,
-        CategoryOfEntity:entityCategory,
+        TypeOfEntity: entityType,
+        CategoryOfEntity: entityCategory,
         ProposedBy,
         proponentName,
         proponentDepartment: requiredDepartment._id,
         EntityDepartment: requiredClubDepartment._id,
         EntityInstitute: requiredInstitute._id,
         EntityCluster: requiredClubCluster._id,
-        proposedFacultyAdvisor: [proposedFacultyAdvisor1, proposedFacultyAdvisor2],
-        proposedFacultyCoAdvisor: [proposedFacultyCoAdvisor1, proposedFacultyCoAdvisor2],
-        proposedStudentRepresentative: [proposedStudentRepresentative1, proposedStudentRepresentative2],
-        proposedStudentJointRepresentative: [proposedStudentJointRepresentative1, proposedStudentJointRepresentative2],
+        proposedFacultyAdvisor: proposedFacultyAdvisors, 
+        proposedFacultyCoAdvisor: proposedFacultyCoAdvisors,
+        proposedStudentRepresentative: proposedStudentRepresentatives,
+        proposedStudentJointRepresentative: proposedStudentJointRepresentatives,
         ProposedDate,
       });
 
@@ -84,8 +74,8 @@ console.log(EntityCluster);
       await createStudentRep(
         {
           body: {
-            proposedStudentRepresentative: [proposedStudentRepresentative1, proposedStudentRepresentative2],
-            proposedStudentJointRepresentative: [proposedStudentJointRepresentative1, proposedStudentJointRepresentative2],
+            proposedStudentRepresentative: proposedStudentRepresentatives,
+            proposedStudentJointRepresentative: proposedStudentJointRepresentatives,
             proponentDepartment,
           },
         },
@@ -95,11 +85,12 @@ console.log(EntityCluster);
         requiredInstitute,
         savedEntity
       );
+
       await createFaculty(
         {
           body: {
-            proposedFacultyAdvisor: [proposedFacultyAdvisor1, proposedFacultyAdvisor2],
-            proposedFacultyCoAdvisor: [proposedFacultyCoAdvisor1, proposedFacultyCoAdvisor2],
+            proposedFacultyAdvisor: proposedFacultyAdvisors,
+            proposedFacultyCoAdvisor: proposedFacultyCoAdvisors,
             proponentDepartment,
           },
         },
@@ -110,10 +101,9 @@ console.log(EntityCluster);
         savedEntity
       );
 
-
       return res.status(201).json({
         success: true,
-        message: 'Club created successfully along with student representatives',
+        message: 'Club created successfully along with student representatives and faculty advisors',
         Entity: savedEntity,
       });
     } else {

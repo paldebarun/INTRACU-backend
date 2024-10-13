@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const { createStudentRep } = require('../controllers/studentRepresentative');
 const {createFaculty} = require('../controllers/facultyAdvisor');
 
+
 exports.createCommunity = async (req, res) => {
   try {
     const {
@@ -13,22 +14,19 @@ exports.createCommunity = async (req, res) => {
       entityType,
       entityCategory,
       ProposedBy,
-      proponentName,
-      proponentDepartment,
       EntityInstitute,
       EntityCluster,
-      proposedFacultyAdvisor1,
-      proposedFacultyAdvisor2,
-      proposedFacultyCoAdvisor1,
-      proposedFacultyCoAdvisor2,
-      proposedStudentRepresentative1,
-      proposedStudentRepresentative2,
-      proposedStudentJointRepresentative1,
-      proposedStudentJointRepresentative2,
+      proponentName,
+      proponentDepartment,
+      proposedFacultyAdvisors, 
+      proposedFacultyCoAdvisors, 
+      proposedStudentRepresentatives,
+      proposedStudentJointRepresentatives, 
       ProposedDate,
     } = req.body;
+
     const EntityDepartment = proponentDepartment;
-    // Check for required fields
+
     if (
       !ProposedEntityName ||
       !entityType ||
@@ -36,59 +34,50 @@ exports.createCommunity = async (req, res) => {
       !ProposedBy ||
       !proponentName ||
       !proponentDepartment ||
-      !EntityDepartment ||
       !EntityInstitute ||
       !EntityCluster ||
-      !proposedFacultyAdvisor1 ||
-      !proposedFacultyAdvisor2 ||
-      !proposedStudentRepresentative1 ||
-      !proposedStudentRepresentative2 ||
-      !proposedStudentJointRepresentative1 ||
-      !proposedStudentJointRepresentative2 ||
-      !proposedFacultyCoAdvisor1 ||
-      !proposedFacultyCoAdvisor2 ||
-      !ProposedDate
+      !ProposedDate ||
+      !Array.isArray(proposedFacultyAdvisors) || proposedFacultyAdvisors.length === 0 ||
+      !Array.isArray(proposedFacultyCoAdvisors) || proposedFacultyCoAdvisors.length === 0 ||
+      !Array.isArray(proposedStudentRepresentatives) || proposedStudentRepresentatives.length === 0 ||
+      !Array.isArray(proposedStudentJointRepresentatives) || proposedStudentJointRepresentatives.length === 0
     ) {
       return res.status(400).json({
         success: false,
-        message: 'All fields are required',
+        message: 'All fields are required, including non-empty arrays for faculty and student representatives',
       });
     }
 
-    // Fetch related entities from their respective models
     const requiredDepartment = await Department.findOne({ name: proponentDepartment });
     const requiredClubDepartment = await Department.findOne({ name: EntityDepartment });
     const requiredClubCluster = await Cluster.findOne({ name: EntityCluster });
     const requiredInstitute = await Institute.findOne({ name: EntityInstitute });
 
-    // Check if related entities exist
-    if (requiredDepartment && requiredClubDepartment && requiredClubCluster && requiredInstitute) {
+    if (requiredDepartment && requiredClubCluster && requiredClubDepartment && requiredInstitute) {
       const newCommunity = new Communities({
         ProposedEntityName,
-        TypeOfEntity:entityType,
-        CategoryOfEntity:entityCategory,
+        TypeOfEntity: entityType,
+        CategoryOfEntity: entityCategory,
         ProposedBy,
         proponentName,
         proponentDepartment: requiredDepartment._id,
         EntityDepartment: requiredClubDepartment._id,
         EntityInstitute: requiredInstitute._id,
         EntityCluster: requiredClubCluster._id,
-        proposedFacultyAdvisor: [proposedFacultyAdvisor1, proposedFacultyAdvisor2],
-        proposedFacultyCoAdvisor: [proposedFacultyCoAdvisor1, proposedFacultyCoAdvisor2],
-        proposedStudentRepresentative: [proposedStudentRepresentative1, proposedStudentRepresentative2],
-        proposedStudentJointRepresentative: [
-          proposedStudentJointRepresentative1,
-          proposedStudentJointRepresentative2,
-        ],
+        proposedFacultyAdvisor: proposedFacultyAdvisors, 
+        proposedFacultyCoAdvisor: proposedFacultyCoAdvisors,
+        proposedStudentRepresentative: proposedStudentRepresentatives,
+        proposedStudentJointRepresentative: proposedStudentJointRepresentatives,
         ProposedDate,
       });
 
       const savedEntity = await newCommunity.save();
+
       await createStudentRep(
         {
           body: {
-            proposedStudentRepresentative: [proposedStudentRepresentative1, proposedStudentRepresentative2],
-            proposedStudentJointRepresentative: [proposedStudentJointRepresentative1, proposedStudentJointRepresentative2],
+            proposedStudentRepresentative: proposedStudentRepresentatives,
+            proposedStudentJointRepresentative: proposedStudentJointRepresentatives,
             proponentDepartment,
           },
         },
@@ -98,11 +87,12 @@ exports.createCommunity = async (req, res) => {
         requiredInstitute,
         savedEntity
       );
+
       await createFaculty(
         {
           body: {
-            proposedFacultyAdvisor: [proposedFacultyAdvisor1, proposedFacultyAdvisor2],
-            proposedFacultyCoAdvisor: [proposedFacultyCoAdvisor1, proposedFacultyCoAdvisor2],
+            proposedFacultyAdvisor: proposedFacultyAdvisors,
+            proposedFacultyCoAdvisor: proposedFacultyCoAdvisors,
             proponentDepartment,
           },
         },
@@ -113,10 +103,9 @@ exports.createCommunity = async (req, res) => {
         savedEntity
       );
 
-
       return res.status(201).json({
         success: true,
-        message: 'Community created successfully',
+        message: 'Community created successfully along with student representatives and faculty advisors',
         Entity: savedEntity,
       });
     } else {
@@ -128,10 +117,11 @@ exports.createCommunity = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: `Error creating community: ${error.message}`,
+      message: `Error creating newCommunity: ${error.message}`,
     });
   }
 };
+
 
 exports.findAllCommunities = async (req, res) => {
   try {

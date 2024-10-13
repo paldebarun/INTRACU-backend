@@ -5,89 +5,77 @@ const Cluster = require('../models/Cluster');
 const { createStudentRep } = require('../controllers/studentRepresentative');
 const {createFaculty} = require('../controllers/facultyAdvisor');
 const mongoose = require('mongoose');
-
 exports.createProfessionalSociety = async (req, res) => {
   try {
     const {
       ProposedEntityName,
       entityType,
-      EntityInstitute,
-      EntityCluster,
       entityCategory,
       ProposedBy,
+      EntityInstitute,
+      EntityCluster,
       proponentName,
       proponentDepartment,
-      proposedFacultyAdvisor1,
-      proposedFacultyAdvisor2,
-      proposedFacultyCoAdvisor1,
-      proposedFacultyCoAdvisor2,
-      proposedStudentRepresentative1,
-      proposedStudentRepresentative2,
-      proposedStudentJointRepresentative1,
-      proposedStudentJointRepresentative2,
+      proposedFacultyAdvisors, 
+      proposedFacultyCoAdvisors, 
+      proposedStudentRepresentatives,
+      proposedStudentJointRepresentatives, 
       ProposedDate,
     } = req.body;
+
     const EntityDepartment = proponentDepartment;
-    // Check if all required fields are present
+
     if (
       !ProposedEntityName ||
       !entityType ||
       !entityCategory ||
       !ProposedBy ||
-      !EntityDepartment ||
-      !EntityInstitute ||
-      !EntityCluster ||
       !proponentName ||
       !proponentDepartment ||
-      !proposedFacultyAdvisor1 ||
-      !proposedFacultyAdvisor2 ||
-      !proposedStudentRepresentative1 ||
-      !proposedStudentRepresentative2 ||
-      !proposedStudentJointRepresentative1 ||
-      !proposedStudentJointRepresentative2 ||
-      !proposedFacultyCoAdvisor1 ||
-      !proposedFacultyCoAdvisor2 ||
-      !ProposedDate
+      !EntityInstitute ||
+      !EntityCluster ||
+      !ProposedDate ||
+      !Array.isArray(proposedFacultyAdvisors) || proposedFacultyAdvisors.length === 0 ||
+      !Array.isArray(proposedFacultyCoAdvisors) || proposedFacultyCoAdvisors.length === 0 ||
+      !Array.isArray(proposedStudentRepresentatives) || proposedStudentRepresentatives.length === 0 ||
+      !Array.isArray(proposedStudentJointRepresentatives) || proposedStudentJointRepresentatives.length === 0
     ) {
       return res.status(400).json({
         success: false,
-        message: 'All fields are required',
+        message: 'All fields are required, including non-empty arrays for faculty and student representatives',
       });
     }
 
-    // Find the department by name
     const requiredDepartment = await Department.findOne({ name: proponentDepartment });
     const requiredClubDepartment = await Department.findOne({ name: EntityDepartment });
     const requiredClubCluster = await Cluster.findOne({ name: EntityCluster });
     const requiredInstitute = await Institute.findOne({ name: EntityInstitute });
 
-
-
-    if (requiredDepartment) {
+    if (requiredDepartment && requiredClubCluster && requiredClubDepartment && requiredInstitute) {
       const newSociety = new ProfessionalSocieties({
         ProposedEntityName,
-        TypeOfEntity:entityType,
-        CategoryOfEntity:entityCategory,
+        TypeOfEntity: entityType,
+        CategoryOfEntity: entityCategory,
         ProposedBy,
-        EntityDepartment:requiredClubDepartment._id,
-        EntityInstitute:requiredInstitute._id,
-        EntityCluster:requiredClubCluster._id,
         proponentName,
         proponentDepartment: requiredDepartment._id,
-        proposedFacultyAdvisor: [proposedFacultyAdvisor1, proposedFacultyAdvisor2],
-        proposedFacultyCoAdvisor: [proposedFacultyCoAdvisor1, proposedFacultyCoAdvisor2],
-        proposedStudentRepresentative: [proposedStudentRepresentative1, proposedStudentRepresentative2],
-        proposedStudentJointRepresentative: [proposedStudentJointRepresentative1, proposedStudentJointRepresentative2],
+        EntityDepartment: requiredClubDepartment._id,
+        EntityInstitute: requiredInstitute._id,
+        EntityCluster: requiredClubCluster._id,
+        proposedFacultyAdvisor: proposedFacultyAdvisors, 
+        proposedFacultyCoAdvisor: proposedFacultyCoAdvisors,
+        proposedStudentRepresentative: proposedStudentRepresentatives,
+        proposedStudentJointRepresentative: proposedStudentJointRepresentatives,
         ProposedDate,
       });
 
-      // Save the new Professional Society
       const savedEntity = await newSociety.save();
+
       await createStudentRep(
         {
           body: {
-            proposedStudentRepresentative: [proposedStudentRepresentative1, proposedStudentRepresentative2],
-            proposedStudentJointRepresentative: [proposedStudentJointRepresentative1, proposedStudentJointRepresentative2],
+            proposedStudentRepresentative: proposedStudentRepresentatives,
+            proposedStudentJointRepresentative: proposedStudentJointRepresentatives,
             proponentDepartment,
           },
         },
@@ -97,11 +85,12 @@ exports.createProfessionalSociety = async (req, res) => {
         requiredInstitute,
         savedEntity
       );
+
       await createFaculty(
         {
           body: {
-            proposedFacultyAdvisor: [proposedFacultyAdvisor1, proposedFacultyAdvisor2],
-            proposedFacultyCoAdvisor: [proposedFacultyCoAdvisor1, proposedFacultyCoAdvisor2],
+            proposedFacultyAdvisor: proposedFacultyAdvisors,
+            proposedFacultyCoAdvisor: proposedFacultyCoAdvisors,
             proponentDepartment,
           },
         },
@@ -114,22 +103,23 @@ exports.createProfessionalSociety = async (req, res) => {
 
       return res.status(201).json({
         success: true,
-        message: 'Professional Society created successfully',
+        message: 'Community created successfully along with student representatives and faculty advisors',
         Entity: savedEntity,
       });
     } else {
       return res.status(404).json({
         success: false,
-        message: 'Invalid department',
+        message: 'Either department, institute, or cluster is invalid',
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: `Error creating Professional Society: ${error.message}`,
+      message: `Error creating newCommunity: ${error.message}`,
     });
   }
 };
+
 
 exports.findAllProfessionalSocieties = async (req, res) => {
   try {
