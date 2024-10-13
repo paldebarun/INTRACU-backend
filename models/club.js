@@ -77,6 +77,10 @@ const Club=new mongoose.Schema({
     ProposedDate:{
         type:Date,
         require:true
+    },
+    approval:{
+        type: Boolean,
+        default: false
     }
 
 })

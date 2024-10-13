@@ -73,6 +73,10 @@ const Communities = new mongoose.Schema({
     ProposedDate: {
         type: Date,
         required: true
+    },
+    approval:{
+        type: Boolean,
+        default: false
     }
 });
 
