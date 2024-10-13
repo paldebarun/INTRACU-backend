@@ -110,6 +110,8 @@ app.use('/api/deptSocieties', departmentalSocietiesRoutes);
 const professionalSocietiesRoutes = require('./routes/professionalSocieties');
 app.use('/api/proffSocieties', professionalSocietiesRoutes);
 
+const instituteRoutes = require('./routes/instituteRoutes');
+app.use('/api/instituteRoutes',instituteRoutes);
 const communitiesRoutes = require('./routes/communitiesRoutes');
 app.use('/api/communitiesRoutes', communitiesRoutes);
 

@@ -19,10 +19,6 @@ const Faculty = new mongoose.Schema({
         type: Number,
         require: true
     },
-    emailId:{
-        type:String,
-        require :true
-    },
     institute:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Institute"

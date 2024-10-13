@@ -18,7 +18,7 @@ exports.createStudentRep = async (req, res, requiredDepartment, requiredCluster,
     const reps = [...proposedStudentRepresentative, ...proposedStudentJointRepresentative];
 
     for (const rep of reps) {
-      const { proposedStudentRepresentativeName, proposedStudentRepresentativeUid, MobileNumber, emailId } = rep;
+      const { proposedStudentRepresentativeName, proposedStudentRepresentativeUid, MobileNumber } = rep;
 
       const hashedPassword = await bcrypt.hash(proposedStudentRepresentativeUid, 10);
 
@@ -29,7 +29,6 @@ exports.createStudentRep = async (req, res, requiredDepartment, requiredCluster,
         cluster: requiredCluster._id,
         uid:proposedStudentRepresentativeUid,
         phone:MobileNumber,
-        emailId,
         club: savedEntity._id,
         password: hashedPassword,
       });

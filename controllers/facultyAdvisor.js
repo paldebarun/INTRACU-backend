@@ -18,7 +18,7 @@ exports.createFaculty = async (req, res, requiredDepartment, requiredCluster, re
     const advisors = [...proposedFacultyAdvisor, ...proposedFacultyCoAdvisor];
 
     for (const advisor of advisors) {
-      let { ProposedFacultyAdvisorName, ProposedFacultyAdvisorEid,ProposedFacultyCoAdvisorEid, MobileNumber, emailId } = advisor;
+      let { ProposedFacultyAdvisorName, ProposedFacultyAdvisorEid,ProposedFacultyCoAdvisorEid, MobileNumber } = advisor;
       var hashedPassword;
       if(ProposedFacultyAdvisorEid){
        hashedPassword = await bcrypt.hash(ProposedFacultyAdvisorEid, 10);
@@ -36,7 +36,6 @@ exports.createFaculty = async (req, res, requiredDepartment, requiredCluster, re
         cluster: requiredCluster._id,
         eid:ProposedFacultyAdvisorEid,
         phone:MobileNumber,
-        emailId,
         club: savedEntity._id,
         password: hashedPassword,
       });

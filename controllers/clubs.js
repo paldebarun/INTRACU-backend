@@ -23,7 +23,12 @@ exports.createClub = async (req, res) => {
     } = req.body;
 
     const EntityDepartment = proponentDepartment;
-
+    if(!Array.isArray(proposedFacultyAdvisors)){
+      return res.status(400).json({
+        success:false,
+        message:"Array bhej yr"
+      });
+    }
     if (
       !ProposedEntityName ||
       !entityType ||
