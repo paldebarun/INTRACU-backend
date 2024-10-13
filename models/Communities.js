@@ -25,7 +25,6 @@ const Communities = new mongoose.Schema({
     },
     CategoryOfEntity: {
         type: String,
-        enum: ['A', 'B', 'C','D'],
     },
     ProposedBy: {
         type: String,
