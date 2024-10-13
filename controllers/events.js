@@ -204,7 +204,8 @@ exports.getAllApprovedEvents = async (req, res) => {
 };
 exports.getFeaturedEvents = async (req, res) => {
     try {
-        const allEvents = await Event.find({featured:true});  // Fetch all events from the database
+        const currentDate = new Date();
+        const allEvents = await Event.find({ 'date.startDate': { $gte: currentDate },featured:true});  // Fetch all events from the database
 
         return res.status(200).json({
             success: true,
