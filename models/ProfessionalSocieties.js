@@ -23,7 +23,6 @@ const ProfessionalSocieties = new mongoose.Schema({
     },
     CategoryOfEntity: {
         type: String,
-        enum: ['A', 'B', 'C','D'],
         required: true
     },
     ProposedBy: {
