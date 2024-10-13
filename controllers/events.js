@@ -202,6 +202,55 @@ exports.getAllApprovedEvents = async (req, res) => {
         });
     }
 };
+exports.getAllApprovedButNotfeatured = async (req, res) => {
+    try {
+        const currentDate = new Date();
+
+        const allEvents = await Event.find({
+            'date.startDate': { $gte: currentDate }
+        , approval: true, featured:false});
+        const eventsWithEntityNames = await Promise.all(
+            allEvents.map(async event => {
+                let entityName = '';
+
+                switch (event.entity.type) {
+                    case 'club':
+                        const club = await Club.findById(event.entity.id).select('ProposedEntityName');
+                        entityName = club ? club.ProposedEntityName : 'Unknown Club';
+                        break;
+                    case 'community':
+                        const community = await Communities.findById(event.entity.id).select('ProposedEntityName');
+                        entityName = community ? community.ProposedEntityName : 'Unknown Community';
+                        break;
+                    case 'department-society':
+                        const department = await DepartmentalSocieties.findById(event.entity.id).select('ProposedEntityName');
+                        entityName = department ? department.ProposedEntityName : 'Unknown Departmental Society';
+                        break;
+                    case 'professional-society':
+                        const professional = await ProfessionalSocieties.findById(event.entity.id).select('ProposedEntityName');
+                        entityName = professional ? professional.ProposedEntityName : 'Unknown Professional Society';
+                        break;
+                    default:
+                        entityName = 'Unknown Entity';
+                }
+                return {
+                    ...event.toObject(),
+                    entityName: entityName,
+                };
+            })
+        );
+
+        return res.status(200).json({
+            success: true,
+            events: eventsWithEntityNames
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: `Error retrieving events: ${err.message}`,
+        });
+    }
+};
 exports.getFeaturedEvents = async (req, res) => {
     try {
         const currentDate = new Date();
