@@ -459,7 +459,7 @@ exports.getTotalBudgetByEntity = async (req, res) => {
     } catch (err) {
       return res.status(500).json({
         success: false,
-        message: Error calculating total budget: ${err.message},
+        message:`Error calculating total budget: ${err.message}`,
       });
     }
   };
