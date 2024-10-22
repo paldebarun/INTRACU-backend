@@ -423,46 +423,50 @@ function getCurrentMonthRange() {
   }
   
 exports.getTotalBudgetByEntity = async (req, res) => {
-    try {
-      const { entityRef } = req.query;
-      
-      if (!mongoose.Types.ObjectId.isValid(entityRef)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid entity reference',
-        });
-      }
-  
-      const { startOfMonth, endOfMonth } = getCurrentMonthRange();
-      console.log(startOfMonth);
-      console.log(endOfMonth);
-      console.log(entityRef);
-      const totalBudget = await Event.aggregate([
-        {
-          $match: {
-            'entity.id': new mongoose.Types.ObjectId(entityRef),
-            date: { $gte: startOfMonth, $lte: endOfMonth }
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            totalBudget: { $sum: "$budget" }
-          }
-        }
-      ]);
-      console.log(totalBudget);
-      return res.status(200).json({
-        success: true,
-        totalBudget: totalBudget.length > 0 ? totalBudget[0].totalBudget : 0,
-      });
-    } catch (err) {
-      return res.status(500).json({
+  try {
+    const { entityRef } = req.query;
+
+    if (!mongoose.Types.ObjectId.isValid(entityRef)) {
+      return res.status(400).json({
         success: false,
-        message: `Error calculating total budget: ${err.message}`,
+        message: 'Invalid entity reference',
       });
     }
-  };
+
+    const { startOfMonth, endOfMonth } = getCurrentMonthRange();
+    console.log('Start of Month:', startOfMonth);
+    console.log('End of Month:', endOfMonth);
+    console.log('Entity Reference:', entityRef);
+
+    const totalBudget = await Event.aggregate([
+      {
+        $match: {
+          'entity.id': new mongoose.Types.ObjectId(entityRef),
+          date: { $gte: startOfMonth, $lte: endOfMonth },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalBudget: { $sum: "$budget" },
+        },
+      },
+    ]);
+
+    console.log('Total Budget:', totalBudget);
+
+    return res.status(200).json({
+      success: true,
+      totalBudget: totalBudget.length > 0 ? totalBudget[0].totalBudget : 0,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: `Error calculating total budget: ${err.message}`,
+    });
+  }
+};
+
 
 exports.getMonthly = async (req, res) => {
     try {
