@@ -414,6 +414,24 @@ exports.approve = async(req,res)=>{
         });
 }
 };
+exports.reject = async (req,res)=>{
+    try{
+    const {eventId} req.query;
+    const response = await Event.findByIdAndDelete(eventId);
+     return res.status(200).json({
+        success: true,
+        status: 200,
+        message: 'Event rejected successfully',
+        response,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        status: 500,
+        message: error.message,
+      });
+    }
+}
 function getCurrentMonthRange() {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
