@@ -416,7 +416,7 @@ exports.approve = async(req,res)=>{
 };
 exports.reject = async (req,res)=>{
     try{
-    const {eventId} req.query;
+    const {eventId}= req.query;
     const response = await Event.findByIdAndDelete(eventId);
      return res.status(200).json({
         success: true,
